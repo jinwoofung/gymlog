@@ -1,0 +1,4 @@
+Design idea:
+
+When clicking add workout: 
+- Form pops up on the center of the screen, background is blurred
