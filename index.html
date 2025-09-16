@@ -13,27 +13,20 @@
 
     <main>
         <button id="add-workout">Add workout</button>
-        <section id="workout-form-sect"> 
+        <section id="workout-form-section"> 
             <h2>Log a workout</h2>
             <form id="workout-form" action="" method="">
-                <fieldset>
                     <label for="date">Date</label>
                     <input id="date" name="date" type="date" required>
                     <label for="split">Split</label>
                     <input id="split" name="split" type="text">
-                    <button id="log-workout" type="button">Confirm date and split</button>
-                </fieldset>   
+                    <button id="confirm-date-split-button" type="button">Confirm date and split</button>      
             </form>
-            
-            <p id="final-submit-section" class="button">
-                <!-- final submit button-->
-                <button id="submit-workout" type="submit" form="workout-form">Submit workout</button>
-            </p>
+            <button id="submit-workout-button" type="submit" form="workout-form">Submit workout</button>
         </section>
 
-        <section id="current-workout-sect"></section>
-
-        <section id="prev-workouts-sect"></section>
+        <section id="current-workout-section"></section>
+        <section id="prev-workouts-section"></section>
     </main>
     
 <script src="script.js"></script>

@@ -2,3 +2,33 @@ Design idea:
 
 When clicking add workout: 
 - Form pops up on the center of the screen, background is blurred
+
+Groupings: 
+workouts
+|______workout-[ID]
+    |______exercise-[ID] ; an exercise's ID is only unique within a workout
+        |______set-[ID]  ; an set's ID is only unique within an exercise
+        |______set-[ID]
+        |______set-[ID]
+    |______exercise-[ID]
+        |______set-[ID]
+        |______set-[ID]
+        |______set-[ID]
+|______workout-[ID]
+    |______exercise-[ID]
+        |______set-[ID]
+        |______set-[ID]
+        |______set-[ID]
+    |______exercise-[ID]
+        |______set-[ID]
+        |______set-[ID]
+        |______set-[ID]
+
+
+How should I store the workout data? 
+workout object is created when the "submit" button is pressed 
+within the "workout-form" form element:
+child: 
+date
+split
+multiple exercise sections (+ mutliple set sections)
