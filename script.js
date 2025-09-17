@@ -1,4 +1,3 @@
-document.getElementById("workout-form").style.visibility = "hidden";
 document.getElementById("submit-workout-button").style.visibility = "hidden";
 
 let exerciseCount = 0;
@@ -26,7 +25,7 @@ request.onsuccess = function(event) {
     let storeCount = store.count();
 
     storeCount.onsuccess = function() {
-        if (storeCount.result !== 0) {
+        if (storeCount.result > 0) {
             // access the latest workouts first
             console.log(storeCount.result + " previous workouts in db");
             let cursorRequest = store.index("byDate").openCursor(null, "prev");
@@ -34,6 +33,7 @@ request.onsuccess = function(event) {
             cursorRequest.onsuccess = function(event) {
                 console.log("cursor request success!");
                 let cursor = event.target.result;
+                console.log(cursor);
                 let prevWorkoutsSection = document.getElementById("prev-workouts-section");
 
                 if (cursor) {
@@ -41,6 +41,7 @@ request.onsuccess = function(event) {
                     prevWorkoutsSection.appendChild(prevWorkoutSection);
                     
                     let prevWorkoutObj = cursor.value;
+                    console.log(prevWorkoutObj);
 
                     let prevWorkoutHeader = document.createElement("h2");
                     prevWorkoutHeader.textContent = prevWorkoutObj.date + ": " + prevWorkoutObj.split;
@@ -55,7 +56,7 @@ request.onsuccess = function(event) {
                         
                         for (let j = 0; j < exerciseObj.sets.length; ++j) {
                             let singleSetDisplay = document.createElement("p");
-                            singleSetDisplay.textContent = "Set" + j + ": " + exerciseObj.sets[j].weight + " " + exerciseObj.sets[j].reps;
+                            singleSetDisplay.textContent = "Set " + (j + 1) + ": " + exerciseObj.sets[j].weight + " for " + exerciseObj.sets[j].reps + " reps";
                             exerciseSection.appendChild(singleSetDisplay);
                         }
                         prevWorkoutSection.appendChild(exerciseSection);
@@ -73,22 +74,43 @@ request.onerror = function(e) {
     console.log("failed creating workoutsdb.");
 };
 
+function validateForm() {
+    const workoutForm = document.getElementById("workout-form");
+    if (workoutForm.date.value === '' || workoutForm.split.value === '') return false;
+
+    const exerciseSections = document.querySelectorAll('.exerciseSection');
+    for (const exerciseSection of exerciseSections) {
+        if (exerciseSection.querySelector('input').value === '') return false; 
+        
+        const setSections = document.querySelectorAll('.setSection');
+        for (const setSection of setSections) {
+            if (setSection.children[0].children[0].value === '') return false;
+            if (setSection.children[1].children[0].value === '') return false;
+        }
+    }
+    console.log("form validated");
+    return true;
+}
+
 function createSetSection(exerciseNumber) {
-    const exerciseSect = document.getElementById("exercise-section-" + exerciseNumber)
+    const exerciseSect = document.getElementById("exercise-section-" + exerciseNumber);
         
     const setSect = document.createElement("section");
+    setSect.className = 'setSection';
 
     // set weight 
     let setWeightLabel = document.createElement("label");
     setWeightLabel.textContent = "Weight: ";
     let setWeightInput = document.createElement("input");
     setWeightInput.type = "text";
+    setWeightInput.required = true;
     setWeightLabel.appendChild(setWeightInput);
 
     let setRepLabel = document.createElement("label");
     setRepLabel.textContent = "Reps: "
     let setRepInput = document.createElement("input");
     setRepInput.type = "text";
+    setRepInput.required = true;
     setRepLabel.appendChild(setRepInput);
 
     let setConfirmBtn = document.createElement("button");
@@ -101,13 +123,6 @@ function createSetSection(exerciseNumber) {
     setSect.appendChild(setConfirmBtn);
     exerciseSect.appendChild(setSect);
 }
-
-document.getElementById("add-workout").addEventListener("click", function(e) {
-    // makes the page less cluttered by only providing the "adding workout" form when asked for.
-    document.getElementById("workout-form").style.visibility = "visible";
-    document.getElementById("add-workout").visibility = "hidden";
-});
-
 
 document.getElementById("workout-form").addEventListener("click", function(e) {
     if (e.target.id === "confirm-date-split-button") {
@@ -126,6 +141,7 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
         const exerciseSection = document.createElement("section");
         exerciseSection.id = "exercise-section-" + exerciseCount;
         exerciseSection.count = exerciseCount;
+        exerciseSection.className = "exerciseSection";
 
         let input = document.createElement("input");
         input.id = "exercise-" + exerciseCount; // 
@@ -151,8 +167,8 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
         const currentExerciseNumber = e.target.parentNode.count
         createSetSection(currentExerciseNumber);
         e.target.hidden = true;
-    } else if (e.target.className === "set-confirm-button") {
         document.getElementById("submit-workout-button").style.visibility = "visible";
+    } else if (e.target.className === "set-confirm-button") {
         const currentExerciseNumber = e.target.parentNode.parentNode.count
         createSetSection(currentExerciseNumber);
         e.target.hidden = true;
@@ -160,71 +176,65 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
 });
 
 document.getElementById("submit-workout-button").addEventListener("click", function(e) {
-    e.preventDefault();
+    if (validateForm() === true) {
+        e.preventDefault();
+        const tx = db.transaction("workouts", "readwrite");
+        const workoutObjectStore = tx.objectStore("workouts");
+        const workoutForm = document.getElementById("workout-form"); 
+        let newWorkout = new Object();
 
-    const tx = db.transaction("workouts", "readwrite");
-    const workoutObjectStore = tx.objectStore("workouts");
-    const workoutForm = document.getElementById("workout-form"); 
-    let newWorkout = new Object();
+        console.log("adding workout to a new workout object");
+        // store exercises in an array to later add it to exercise object
+        newWorkout.date = document.getElementById("date").value;
+        console.log("added workout date");
+        newWorkout.split = document.getElementById("split").value;
+        console.log("added workout split");
 
-    console.log("adding workout to a new workout object");
-    // store exercises in an array to later add it to exercise object
-    newWorkout.date = document.getElementById("date").value;
-    console.log("added workout date");
-    newWorkout.split = document.getElementById("split").value;
-    console.log("added workout split");
+        let exercises = [];
+        console.log(workoutForm.childElementCount);
+        for (let i = 0; i < workoutForm.childElementCount; ++i) {
+            if (workoutForm.children[i].tagName === "SECTION") { // "exercise" section
+                console.log("entered a exercise section element");
+                let exercise = new Object();
+                exercise.name = workoutForm.children[i].querySelector("input").value;
+                console.log("adding exercise #" + i); 
+                let sets = [];
 
-    let exercises = [];
-    console.log(workoutForm.childElementCount);
-    for (let i = 0; i < workoutForm.childElementCount; ++i) {
-        if (workoutForm.children[i].tagName === "SECTION") { // "exercise" section
-            console.log("entered a exercise section element");
-            let exercise = new Object();
-            exercise.name = workoutForm.children[i].querySelector("input").value;
-            console.log("adding exercise #" + i); 
-            let sets = [];
-
-            for (let j = 0; j < workoutForm.children[i].childElementCount; ++j) { 
-                if (workoutForm.children[i].children[j].tagName === "SECTION") { // "set" section
-                    const currentSetSection = workoutForm.children[i].children[j];
-                    let set = new Object();
-                    // handle form validation later
-                    set.weight = currentSetSection.children[0].children[0].value; 
-                    set.reps = currentSetSection.children[1].children[0].value; 
-                    sets.push(set);
-                    console.log("added set # " + j + " of exercise " + i + " to set array");
-                }   
+                for (let j = 0; j < workoutForm.children[i].childElementCount; ++j) { 
+                    if (workoutForm.children[i].children[j].tagName === "SECTION") { // "set" section
+                        const currentSetSection = workoutForm.children[i].children[j];
+                        let set = new Object();
+                        // handle form validation later
+                        set.weight = currentSetSection.children[0].children[0].value; 
+                        set.reps = currentSetSection.children[1].children[0].value; 
+                        sets.push(set);
+                        console.log("added set # " + j + " of exercise " + i + " to set array");
+                    }   
+                }
+                exercise.sets = sets;
+                exercises.push(exercise); 
+                console.log("added exercise #" + i + " to exercise array");
             }
-            exercise.sets = sets;
-            exercises.push(exercise); 
-            console.log("added exercise #" + i + " to exercise array");
         }
+
+        newWorkout.exercises = exercises;
+
+        const addRequest = workoutObjectStore.add(newWorkout);
+
+        addRequest.onsuccess = function() {
+            console.log("new workout added!")
+        };
+
+        addRequest.onerror = function(event) {
+            if (addRequest.error.name == "ConstraintError") {
+                console.log("duplicate workout id, failed to add");
+                // make unique id
+                event.preventDefault();
+            } else {
+            }
+        }; 
+    } else {
+        console.log("incomplete input");
     }
-
-    console.log("added exercises to workout object");
-    newWorkout.exercises = exercises;
-    console.log("workout object constructed: ")
-    console.log("   date " + newWorkout.date + " split " + newWorkout.split);
-    for (let i = 0; i < newWorkout.exercises.length; ++i) {
-        console.log("   exercise " + i);
-        for (let j = 0; j < newWorkout.exercises[i].sets.length; ++j) {
-            console.log("       set " + j + " weight " + newWorkout.exercises[i].sets[j].weight + " reps " + newWorkout.exercises[i].sets[j].reps);
-        }
-    } 
-
-    const addRequest = workoutObjectStore.add(newWorkout);
-
-    addRequest.onsuccess = function() {
-        console.log("new workout added!")
-    };
-
-    addRequest.onerror = function(event) {
-        if (addRequest.error.name == "ConstraintError") {
-            console.log("duplicate workout id, failed to add");
-            // make unique id
-            event.preventDefault();
-        } else {
-        }
-    }; 
 });
 

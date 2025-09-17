@@ -1,34 +1,16 @@
-Design idea:
-
+Frontend:
 When clicking add workout: 
 - Form pops up on the center of the screen, background is blurred
+units (metric, imperial etc)
 
-Groupings: 
-workouts
-|______workout-[ID]
-    |______exercise-[ID] ; an exercise's ID is only unique within a workout
-        |______set-[ID]  ; an set's ID is only unique within an exercise
-        |______set-[ID]
-        |______set-[ID]
-    |______exercise-[ID]
-        |______set-[ID]
-        |______set-[ID]
-        |______set-[ID]
-|______workout-[ID]
-    |______exercise-[ID]
-        |______set-[ID]
-        |______set-[ID]
-        |______set-[ID]
-    |______exercise-[ID]
-        |______set-[ID]
-        |______set-[ID]
-        |______set-[ID]
+Backend: 
+form vertification <-- Current task (testing)
+ability to delete exercises and sets while filling out the form
+ability to edit previous workout information
+ability to delete previous workout information
+store to non-local
+
+later:
+support for mobile
 
 
-How should I store the workout data? 
-workout object is created when the "submit" button is pressed 
-within the "workout-form" form element:
-child: 
-date
-split
-multiple exercise sections (+ mutliple set sections)
