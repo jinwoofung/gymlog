@@ -69,12 +69,37 @@ request.onsuccess = function(event) {
 
     cursorRequest.onerror = function(event) {
         console.log("Error: ", event.target.error);
-    }
+    };
+
+    tx.onerror = e => console.log("transaction failed", e.target.error); 
+    tx.oncomplete = () => console.log("transaction complete"); 
 };
 
 request.onerror = function(event) {
     console.log("failed creating workoutsdb");
 };
+
+function createButton(textContent, className) {
+    let button = document.createElement('button'); 
+    button.type = 'button'; 
+    button.textContent = textContent;
+    button.className = className;
+
+    return button;
+}
+
+function createNestedLabelInput(id, textContent, required) {
+    let label = document.createElement('label');
+    label.htmlFor = id;
+    label.textContent = textContent;
+
+    let input = document.createElement('input');
+    input.id = id;
+    input.required = required;
+
+    label.appendChild(input); 
+    return label;
+}
 
 function validateForm() {
     const workoutForm = document.getElementById("workout-form");
@@ -103,66 +128,26 @@ function createExerciseSection(exerciseNumber) {
     exerciseSection.count = exerciseNumber;
     exerciseSection.className = "exerciseSection";
 
-    let label = document.createElement("label");
-    label.innerText = "Exercise: ";
-
-    let input = document.createElement("input");
-    input.id = "exercise-" + exerciseNumber; // 
-    input.required = true;
-    label.appendChild(input);
-
-    let exerciseConfirmBtn = document.createElement("button");
-    exerciseConfirmBtn.type = "button";
-    exerciseConfirmBtn.className = "exercise-confirm-button";
-    exerciseConfirmBtn.innerText = "confirm exercise";
-
-    let exerciseRemoveBtn = document.createElement("button");
-    exerciseRemoveBtn.type = "button";
-    exerciseRemoveBtn.className = "exercise-remove-button";
-    exerciseRemoveBtn.innerText = "remove this exercise";
-
-    let setCreateBtn = document.createElement("button"); 
-    setCreateBtn.type = "button";
-    setCreateBtn.className = "set-create-button";
-    setCreateBtn.innerText = "add a set";
-
-    exerciseSection.appendChild(label);
-    exerciseSection.appendChild(exerciseConfirmBtn);
-    exerciseSection.appendChild(exerciseRemoveBtn);
-    exerciseSection.appendChild(setCreateBtn);
+    exerciseSection.append(
+        createNestedLabelInput(`exercise-${exerciseNumber}`, "Exercise: ", true),
+        createButton("confirm exercise", "exercise-confirm-button"),
+        createButton("remove this exercise", "exercise-remove-button"),
+        createButton("add a set", "set-create-button")
+    );
     workoutForm.appendChild(exerciseSection);
 }
 
 function createSetSection(exerciseNumber) {
-    const exerciseSect = document.getElementById("exercise-section-" + exerciseNumber);
+    const exerciseSect = document.getElementById(`exercise-section-${exerciseNumber}`);
         
     const setSect = document.createElement("section");
     setSect.className = 'setSection';
 
-    // information about the set
-    let setWeightLabel = document.createElement("label");
-    setWeightLabel.textContent = "Weight: ";
-    let setWeightInput = document.createElement("input");
-    setWeightInput.type = "text";
-    setWeightInput.required = true;
-    setWeightLabel.appendChild(setWeightInput);
-
-    let setRepLabel = document.createElement("label");
-    setRepLabel.textContent = "Reps: "
-    let setRepInput = document.createElement("input");
-    setRepInput.type = "text";
-    setRepInput.required = true;
-    setRepLabel.appendChild(setRepInput);
-
-    // removing a set
-    let setRemoveBtn = document.createElement("button"); 
-    setRemoveBtn.className = "set-remove-button";
-    setRemoveBtn.type = "button"
-    setRemoveBtn.textContent = "remove this set";
-
-    setSect.appendChild(setWeightLabel);
-    setSect.appendChild(setRepLabel);
-    setSect.appendChild(setRemoveBtn);
+    setSect.append(
+        createNestedLabelInput('', "Weight: ", true),
+        createNestedLabelInput('', "Reps: ", true),
+        createButton("remove this set", "set-remove-button")
+    );
     exerciseSect.appendChild(setSect);
 }
 
@@ -201,19 +186,14 @@ function makeWorkoutObject() {
 
 function addWorkoutObjectToIndexedDB(workoutObject) {
     const tx = db.transaction("workouts", "readwrite");
-    const workoutObjectStore = tx.objectStore("workouts");
-    const addRequest = workoutObjectStore.add(workoutObject);
+    const store = tx.objectStore("workouts");
 
-    addRequest.onsuccess = function(e) {
-        console.log("new workout added!")
-    };
+    const addRequest = store.add(workoutObject);
+    addRequest.onsuccess = () => console.log("new workout added!");
+    addRequest.onerror = () => console.log("Error: Failed to add workoutObject to IndexedDB");
 
-    addRequest.onerror = function(e) {
-        if (addRequest.error.name == "ConstraintError") {
-            console.log("duplicate workout id, failed to add");
-            e.preventDefault();
-        } 
-    };
+    tx.onerror = e => console.log("transaction failed", e.target.error); 
+    tx.oncomplete = () => console.log("transaction complete"); 
 }
 
 document.getElementById("workout-form").addEventListener("click", function(e) {
