@@ -1,7 +1,6 @@
 document.getElementById("submit-workout-button").style.visibility = "hidden";
 
 let exerciseCount = 0;
-let setCount = 0;
 
 const request = window.indexedDB.open("workoutsdb");
 let db;
