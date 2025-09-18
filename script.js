@@ -3,7 +3,6 @@ document.getElementById("submit-workout-button").style.visibility = "hidden";
 let exerciseCount = 0;
 let setCount = 0;
 
-// indexedDB
 const request = window.indexedDB.open("workoutsdb");
 let db;
 
@@ -13,32 +12,43 @@ request.onupgradeneeded = function(event) {
     const dateIndex = store.createIndex("byDate", "date");
 };
 
-function renderWorkoutToScreen(workoutObject) {
-    let workoutsSection = document.getElementById("prev-workouts-section");
+function renderSets(exerciseSection, setArray) {
+    for (let j = 0; j < setArray.length; ++j) {
+        let set = document.createElement("p");
+        set.textContent = `Set ${j+1}: ${setArray[j].weight} for ${setArray[j].reps} reps`;
+        exerciseSection.appendChild(set);
+    }
+}
 
-    let workoutSection = document.createElement("section");
-    workoutsSection.appendChild(workoutSection);
-
-    let workoutHeader = document.createElement("h2");
-    workoutHeader.textContent = workoutObject.date + ": " + workoutObject.split;
-    workoutSection.appendChild(workoutHeader);
-
-    for (let i = 0; i < workoutObject.exercises.length; ++i) {
+function renderExercises(workoutSection, exerciseArray) {
+    for (let i = 0; i < exerciseArray.length; ++i) {
         let exerciseSection = document.createElement("section");
-        let exerciseObject = workoutObject.exercises[i];
+        workoutSection.appendChild(exerciseSection);
 
-        let exerciseHeader = document.createElement("h5");
+        const exerciseObject = exerciseArray[i];
+        const setArray = exerciseObject.sets;
+
+        let exerciseHeader = document.createElement("h3");
         exerciseHeader.textContent = exerciseObject.name;
         exerciseSection.appendChild(exerciseHeader);
         
-        const sets = exerciseObject.sets;
-        for (let j = 0; j < sets.length; ++j) {
-            let singleSetDisplay = document.createElement("p");
-            singleSetDisplay.textContent = "Set " + (j + 1) + ": " + sets[j].weight + " for " + sets[j].reps + " reps";
-            exerciseSection.appendChild(singleSetDisplay);
-        }
-        workoutSection.appendChild(exerciseSection);
+        renderSets(exerciseSection, setArray);
     }
+}
+
+function renderDateAndSplit(workoutSection, date, split) {
+    let workoutHeader = document.createElement("h2");
+    workoutHeader.textContent = date + ": " + split;
+    workoutSection.appendChild(workoutHeader);
+}
+
+function renderWorkout(workoutObject) {
+    let workoutsSection = document.getElementById("prev-workouts-section");
+    let workoutSection = document.createElement("section");
+    workoutsSection.appendChild(workoutSection);
+
+    renderDateAndSplit(workoutSection, workoutObject.date, workoutObject.split);
+    renderExercises(workoutSection, workoutObject.exercises); 
 }
 
 request.onsuccess = function(event) {
@@ -46,28 +56,24 @@ request.onsuccess = function(event) {
 
     let tx = db.transaction("workouts", "readonly"); 
     let store = tx.objectStore("workouts");
-    let storeCount = store.count();
+    let cursorRequest = store.index("byDate").openCursor(null, "prev");
 
-    // Allows users to view previous workouts 
-    storeCount.onsuccess = function() {
-        if (storeCount.result > 0) {
-            // Access the latest workouts first
-            let cursorRequest = store.index("byDate").openCursor(null, "prev");
+    cursorRequest.onsuccess = function(event) {
+        let cursor = event.target.result;
 
-            cursorRequest.onsuccess = function(event) {
-                let cursor = event.target.result;
+        if (cursor) {
+        renderWorkout(cursor.value);
+        cursor.continue();
+        } 
+    };
 
-                if (cursor) {
-                    renderWorkoutToScreen(cursor.value);
-                    cursor.continue();
-                } 
-            };
-        }
+    cursorRequest.onerror = function(event) {
+        console.log("Error: ", event.target.error);
     }
 };
 
 request.onerror = function(event) {
-    console.log("failed creating workoutsdb.");
+    console.log("failed creating workoutsdb");
 };
 
 function validateForm() {
@@ -193,7 +199,7 @@ function makeWorkoutObject() {
     return workoutObject;
 }
 
-function addWorkoutToIndexedDB(workoutObject) {
+function addWorkoutObjectToIndexedDB(workoutObject) {
     const tx = db.transaction("workouts", "readwrite");
     const workoutObjectStore = tx.objectStore("workouts");
     const addRequest = workoutObjectStore.add(workoutObject);
@@ -248,7 +254,7 @@ document.getElementById("submit-workout-button").addEventListener("click", funct
 
     if (validateForm() === true) {
         const workoutObject = makeWorkoutObject();
-        addWorkoutToIndexedDB(workoutObject);
+        addWorkoutObjectToIndexedDB(workoutObject);
     } else {
         console.log("failed form validation");
         if (!workoutForm.checkValidity()) {
