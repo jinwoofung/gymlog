@@ -3,6 +3,7 @@ document.getElementById("submit-workout-button").style.visibility = "hidden";
 let exerciseCount = 0;
 let setCount = 0;
 
+// indexedDB
 const request = window.indexedDB.open("workoutsdb");
 let db;
 
@@ -16,7 +17,7 @@ request.onupgradeneeded = function(event) {
 
 request.onsuccess = function(event) {
     console.log("succesfully opened workout db");
-    // allows users to view previous workouts 
+    
     db = request.result;
 
     let tx = db.transaction("workouts", "readonly"); 
@@ -24,10 +25,10 @@ request.onsuccess = function(event) {
 
     let storeCount = store.count();
 
+    // Allows users to view previous workouts 
     storeCount.onsuccess = function() {
         if (storeCount.result > 0) {
-            // access the latest workouts first
-            console.log(storeCount.result + " previous workouts in db");
+            // Access the latest workouts first
             let cursorRequest = store.index("byDate").openCursor(null, "prev");
         
             cursorRequest.onsuccess = function(event) {
@@ -69,7 +70,7 @@ request.onsuccess = function(event) {
     }
 };
 
-request.onerror = function(e) {
+request.onerror = function(event) {
     // An error will likely happen if the user doesn't give the tool permission. 
     console.log("failed creating workoutsdb.");
 };
@@ -92,7 +93,7 @@ function validateForm() {
     return true;
 }
 
-function createSetSection(exerciseNumber) {
+function createSet(exerciseNumber) {
     const exerciseSect = document.getElementById("exercise-section-" + exerciseNumber);
         
     const setSect = document.createElement("section");
@@ -143,13 +144,13 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
         exerciseSection.count = exerciseCount;
         exerciseSection.className = "exerciseSection";
 
+        let label = document.createElement("label");
+        label.innerText = "Exercise: ";
+
         let input = document.createElement("input");
         input.id = "exercise-" + exerciseCount; // 
         input.required = true;
-
-        let label = document.createElement("label");
-        label.htmlFor = "exercise-" + exerciseCount;
-        label.innerText = "Exercise: ";
+        label.appendChild(input);
 
         let exerciseConfirmBtn = document.createElement("button");
         exerciseConfirmBtn.type = "button";
@@ -165,12 +166,12 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
     // Don't need confirm button, its just a form anyways 
     } else if (e.target.className === "exercise-confirm-button") {
         const currentExerciseNumber = e.target.parentNode.count
-        createSetSection(currentExerciseNumber);
+        createSet(currentExerciseNumber);
         e.target.hidden = true;
         document.getElementById("submit-workout-button").style.visibility = "visible";
     } else if (e.target.className === "set-confirm-button") {
         const currentExerciseNumber = e.target.parentNode.parentNode.count
-        createSetSection(currentExerciseNumber);
+        createSet(currentExerciseNumber);
         e.target.hidden = true;
     }
 });
@@ -233,8 +234,6 @@ document.getElementById("submit-workout-button").addEventListener("click", funct
             } else {
             }
         }; 
-    } else {
-        console.log("incomplete input");
-    }
+    } 
 });
 
