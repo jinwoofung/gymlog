@@ -10,9 +10,7 @@ let db;
 request.onupgradeneeded = function(event) {
     db = request.result;
     const store = db.createObjectStore("workouts", { keyPath: "id", autoIncrement: true});
-    // Adds ability to sort workouts by date
     const dateIndex = store.createIndex("byDate", "date");
-    console.log("workoutdb created!");
 };
 
 function renderWorkoutToScreen(workoutObject) {
@@ -44,7 +42,6 @@ function renderWorkoutToScreen(workoutObject) {
 }
 
 request.onsuccess = function(event) {
-    console.log("succesfully opened workout db");
     db = request.result;
 
     let tx = db.transaction("workouts", "readonly"); 
@@ -58,7 +55,6 @@ request.onsuccess = function(event) {
             let cursorRequest = store.index("byDate").openCursor(null, "prev");
 
             cursorRequest.onsuccess = function(event) {
-                console.log("cursor request success!");
                 let cursor = event.target.result;
 
                 if (cursor) {
@@ -67,7 +63,6 @@ request.onsuccess = function(event) {
                 } 
             };
         }
-        console.log("existing workouts loaded!");
     }
 };
 
@@ -91,7 +86,6 @@ function validateForm() {
             if (setSection.children[1].children[0].value === '') return false;
         }
     }
-    console.log("form validated");
     return true;
 }
 
@@ -228,7 +222,6 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
     } else if (e.target.id === "add-exercise-button") {
         createExerciseSection(exerciseCount);
         ++exerciseCount;
-    // Don't need confirm button, its just a form anyways 
     } else if (e.target.className === "exercise-confirm-button") {
         const currentExerciseNumber = e.target.parentNode.count
         createSetSection(currentExerciseNumber);
@@ -257,6 +250,7 @@ document.getElementById("submit-workout-button").addEventListener("click", funct
         const workoutObject = makeWorkoutObject();
         addWorkoutToIndexedDB(workoutObject);
     } else {
+        console.log("failed form validation");
         if (!workoutForm.checkValidity()) {
             workoutForm.reportValidity();
         }
