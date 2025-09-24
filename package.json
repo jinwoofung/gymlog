@@ -1,0 +1,26 @@
+{
+  "name": "gymlog",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jinwoofung/gymlog.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jinwoofung/gymlog/issues"
+  },
+  "homepage": "https://github.com/jinwoofung/gymlog#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.36.0"
+  }
+}
