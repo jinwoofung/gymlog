@@ -18,9 +18,11 @@
   "homepage": "https://github.com/jinwoofung/gymlog#readme",
   "dependencies": {
     "express": "^5.1.0",
-    "express-validator": "^7.2.1"
+    "express-validator": "^7.2.1",
+    "pg-promise": "^12.2.0"
   },
   "devDependencies": {
-    "eslint": "^9.36.0"
+    "eslint": "^9.36.0",
+    "nodemon": "^3.1.10"
   }
 }
