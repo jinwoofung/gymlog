@@ -21,6 +21,9 @@ const db = pgp(cn);
 function insertWorkoutToDb(user_id, date, split, workout_detail) {
     db.one('INSERT INTO workouts (user_id, date, split, workout_details) VALUES ($1, $2, $3, $4)', 
         [user_id, date, split, workout_detail])
+        .then(() => {
+            console.log("workout inserted into db");
+        })
         .catch((error) => {
             console.log('ERROR', error);
         });
