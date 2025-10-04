@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- schema ver 0 
+-- schema v0 
 CREATE TABLE users (
     user_id UUID DEFAULT gen_random_uuid(),
     username VARCHAR(255) NOT NULL,

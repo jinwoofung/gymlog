@@ -6,7 +6,7 @@ const app = express();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
 
-// db connection using 'pg-promise'
+// db integration using 'pg-promise'
 const cn = {
     host: 'localhost',
     port: 5432,
