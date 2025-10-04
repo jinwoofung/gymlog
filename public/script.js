@@ -29,16 +29,27 @@ function createButton(textContent, className) {
 }
 
 function validateForm() {
-    const workoutForm = document.getElementById("workout-form");
-    if (workoutForm.date.value === '') return false;
+    const form = document.getElementById("workout-form");
+    if (form.date.value === '') {
+        alert("Please enter a date.");
+        return false;
+    }
 
-    const exerciseSections = document.querySelectorAll('.exerciseSection');
-    if (exerciseSections.length === 0) return false;
+    const exerciseSections = form.querySelectorAll('.exerciseSection');
+    if (exerciseSections.length === 0) {
+        alert("Add exercises to submit the workout.");
+        return false;
+    }
 
     for (const exerciseSection of exerciseSections) {
-        if (exerciseSection.querySelector('input').value === '') return false; 
+        const setSections = exerciseSection.querySelectorAll('.setSection');
         
-        const setSections = document.querySelectorAll('.setSection');
+        if (exerciseSection.querySelector('input').value === '') return false; 
+        if (setSections.length === 0) {
+            alert("Add at least one set per exercise.");
+            return false;
+        }
+
         for (const setSection of setSections) {
             if (setSection.children[0].children[0].value === '') return false;
             if (setSection.children[1].children[0].value === '') return false;
@@ -180,17 +191,5 @@ function makeWorkoutObject() {
 
 document.getElementById("submit-workout-button").addEventListener("click", function(e) {
     const workoutForm = document.getElementById("workout-form"); 
-
-    if (validateForm() === true) {
-        /* const workoutObject = makeWorkoutObject();
-        addWorkoutObjectToIndexedDB(workoutObject);
-        exerciseCount = 0; */
-        console.log("form validated");
-    } else {
-        console.log("failed form validation");
-        if (!workoutForm.checkValidity()) {
-            workoutForm.reportValidity();
-        }
-    }
 });
 
