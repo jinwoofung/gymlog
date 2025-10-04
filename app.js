@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const pgp = require('pg-promise')();
+const { body, ValidationChain, validationResult } = require('express-validator');
 
 const app = express();
 const router = express.Router();
@@ -36,9 +37,15 @@ app.get('/', (req, res) => {
     res.send("gymlog home page", req);
 });
 
-app.post('/submit', (req, res) => {
+app.post('/submit', 
+    body('*')
+    .notEmpty(),
+    body('exercises.*.*.*') // sets and reps
+    .matches('[0-9]*'),
+    (req, res) => {
     // server-side form validation
-
+    const result = validationResult(req);
+    
     console.log(req.body);
     res.send("workout received");
 });
