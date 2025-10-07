@@ -1,35 +1,41 @@
+import { Pool } from 'pg';
+
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
-const pgp = require('pg-promise')();
-const { body, ValidationChain, validationResult } = require('express-validator');
+const { body, validationResult, matchedData } = require('express-validator');
 
 const app = express();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
 
-// db integration using 'pg-promise'
-const cn = {
+// db initialization
+const pool = new Pool({
     host: 'localhost',
-    port: 5432,
-    database: 'gymlog',
     user: 'gymlog_admin',
     password: 'gymlog_admin',
-    max: 30
-};
+    database: 'gymlog',
+    port: 5432, 
+    idleTimeoutMillis: 30000,
+});
 
-const db = pgp(cn);
+const initDb = fs.readFileSync('init_db.sql'); 
+const client = await pool.connect(); 
+const res = client.query(initDb); 
+console.log("db init complete"); 
 
-function insertWorkoutToDb(user_id, date, split, workout_detail) {
-    db.one('INSERT INTO workouts (user_id, date, split, workout_details) VALUES ($1, $2, $3, $4)', 
-        [user_id, date, split, workout_detail])
-        .then(() => {
-            console.log("workout inserted into db");
-        })
-        .catch((error) => {
-            console.log('ERROR', error);
-        });
+// db operation functions
+function insertWorkout(user_id, date, split, workout_detail) {
+    pool.query('INSERT INTO workouts (user_id, date, split, workout_details) VALUES ($1, $2, $3, $4)', 
+        [user_id, date, split, workout_detail]); 
 }
 
+function editWorkout(workout_id, date, split, workout_detail) {}
+
+function deleteWorkout(workout_id) {}
+
+
+// http action
 app.use(express.static('public'));
 app.use(express.urlencoded({extended : true})); 
 
@@ -38,16 +44,30 @@ app.get('/', (req, res) => {
 });
 
 app.post('/submit', 
-    body('*')
-    .notEmpty(),
-    body('exercises.*.*.*') // sets and reps
-    .matches('[0-9]*'),
-    (req, res) => {
     // server-side form validation
-    const result = validationResult(req);
-    
-    console.log(req.body);
-    res.send("workout received");
+    [
+        body('date')
+            .notEmpty().withMessage('date cannot be empty'),
+        body('exercises.exercise[0-9]*.name')
+            .isLength({ min: 1, max: 20}).withMessage('exercise must be between 1 and 20 characters'),
+        body('exercises.*.*.weight')
+            .notEmpty().withMessage('weight cannot be empty')
+            .isFloat({ min: 0.1, max: 999}).withMessage('weight must be a number'), // might not allow decimal nums
+        body('exercises.*.*.reps')
+            .notEmpty().withMessage('reps cannot be empty')
+            .isFloat({ min: 0.1, max: 999 }).withMessage('reps must be a number'),
+    ],
+    (req, res) => {
+        const result = validationResult(req);
+        if (result.isEmpty()) {
+            const data = matchedData(req);
+            console.log(req.body);
+            insertWorkoutToDb(user_id, data.date, data.split, data.exercises);
+            res.send("workout received");
+        } else {
+            // Error 
+            return res.status(422).json({ errors: result.array() });
+        }      
 });
 
 app.listen(PORT, (error) => {
