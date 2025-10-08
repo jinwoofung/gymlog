@@ -79,7 +79,7 @@ function createExerciseSection(exerciseNumber) {
     exerciseSection.setCount = 0;
 
     exerciseSection.append(
-        createNestedLabelInput(`exercises[exercise${exerciseNumber}][name]`, "Exercise: ", true),
+        createNestedLabelInput(`exercises[${exerciseNumber}][name]`, "Exercise: ", true),
         createButton("confirm exercise", "exercise-confirm-button"),
         createButton("remove this exercise", "exercise-remove-button"),
         createButton("add a set", "set-create-button")
@@ -114,8 +114,8 @@ function createSetSection(exerciseNumber) {
     setSect.className = 'setSection';
 
     setSect.append(
-        createNestedLabelInput(`exercises[exercise${exerciseNumber}][sets][set${exerciseSect.setCount}][weight]`, "Weight: ", true),
-        createNestedLabelInput(`exercises[exercise${exerciseNumber}][sets][set${exerciseSect.setCount}][reps]`, "Reps: ", true),
+        createNestedLabelInput(`exercises[${exerciseNumber}][sets][${exerciseSect.setCount}][weight]`, "Weight: ", true),
+        createNestedLabelInput(`exercises[${exerciseNumber}][sets][${exerciseSect.setCount}][reps]`, "Reps: ", true),
         createButton("remove this set", "set-remove-button")
     );
 
