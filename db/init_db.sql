@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS workouts (
 	user_id UUID NOT NULL, 
 	date DATE NOT NULL,
 	split VARCHAR(25) NOT NULL,
-	workout_details JSON NOT NULL,
+	exercises JSON NOT NULL,
     PRIMARY KEY(workout_id),
     CONSTRAINT fk_user
         FOREIGN KEY(user_id)

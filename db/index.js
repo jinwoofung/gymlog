@@ -1,20 +1,50 @@
 import { Pool } from 'pg';
+import fs from 'fs';
 
 // db initialization
 const pool = new Pool();
 
-const initDb = fs.readFileSync('init_db.sql'); 
-const client = await pool.connect(); 
-console.log("connected to db");
-const res = client.query(initDb); 
-console.log("db init complete"); 
-
-// db operation functions
-function insertWorkout(user_id, date, split, workout_detail) {
-    pool.query('INSERT INTO workouts (user_id, date, split, workout_details) VALUES ($1, $2, $3, $4)', 
-        [user_id, date, split, workout_detail]); 
+export const query = (text, params) => {
+    return pool.query(text, params)
 }
 
-function editWorkout(workout_id, date, split, workout_detail) {}
+export const initDb = async () => {
+    const initString = fs.readFileSync('init_db.sql'); 
+    try {
+        await query(initString); 
+    } catch (error) {
+        console.log(error);
+    } 
+}
 
-function deleteWorkout(workout_id) {}
+export const addWorkout = async (date, split, exercises) => {
+    try {
+        await query('INSERT INTO gymlog(workout_id, user_id, date, split, exercises) VALUES($1, $2, $3) RETURNING *',
+        [date, split, exercises]); 
+    } catch (error) {
+        console.log(error); 
+    }
+}
+
+export const deleteWorkout = async (workout_id) => {
+    try {
+        await query('DELETE FROM gymlog(workout_id, user_id, date, split, exercises) WHERE workout_id = $1', workout_id);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const editWorkout = async (workout_id, date, split, exercises) => {
+    try {
+        await query('UPDATE gymlog(workout_id, user_id, date, split, exercises) SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
+                    [date, split, exercises, workout_id]);
+    } catch (error) {
+        
+    }
+}
+
+// caller must release the Client
+export const getClient = () => {
+    return pool.connect();
+}
+
