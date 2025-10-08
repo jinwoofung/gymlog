@@ -1,9 +1,13 @@
 import express from 'express';
 import { body, validationResult, matchedData } from 'express-validator'; 
+import { fileURLToPath } from 'url';
+import path from 'path';
 import * as db from './db/index.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // http action
 app.use(express.static('public'));
@@ -11,6 +15,10 @@ app.use(express.urlencoded({extended : true}));
 
 app.get('/', (req, res) => {
     res.send("gymlog home page", req);
+});
+
+app.get('/submit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.post('/submit', 
@@ -33,7 +41,7 @@ app.post('/submit',
         if (result.isEmpty()) {
             const data = matchedData(req);
             console.log(req.body);
-            // insertWorkoutToDb(user_id, data.date, data.split, data.exercises);
+            db.addWorkout(data.date, data.split, data.exercises);
             res.send("workout received");
         } else {
             // Error 

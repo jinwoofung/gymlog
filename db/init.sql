@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS workouts (
     workout_id UUID DEFAULT gen_random_uuid(), 
-	user_id UUID NOT NULL, 
+	-- user_id UUID NOT NULL, 
 	date DATE NOT NULL,
 	split VARCHAR(25) NOT NULL,
 	exercises JSON NOT NULL,

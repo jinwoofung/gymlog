@@ -1,6 +1,8 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 
+const INIT_DB_PATH = 'init.sql'; 
+
 // db initialization
 const pool = new Pool();
 
@@ -9,9 +11,9 @@ export const query = (text, params) => {
 }
 
 export const initDb = async () => {
-    const initString = fs.readFileSync('init_db.sql'); 
+    const initString = fs.readFileSync(INIT_DB_PATH); 
     try {
-        await query(initString); 
+        const result = await query(initString); 
     } catch (error) {
         console.log(error);
     } 
@@ -19,8 +21,9 @@ export const initDb = async () => {
 
 export const addWorkout = async (date, split, exercises) => {
     try {
-        await query('INSERT INTO gymlog(workout_id, user_id, date, split, exercises) VALUES($1, $2, $3) RETURNING *',
+        const result = await query('INSERT INTO gymlog(date, split, exercises) VALUES($1, $2, $3) RETURNING *',
         [date, split, exercises]); 
+        console.log(result.rows[0]);
     } catch (error) {
         console.log(error); 
     }
@@ -28,7 +31,8 @@ export const addWorkout = async (date, split, exercises) => {
 
 export const deleteWorkout = async (workout_id) => {
     try {
-        await query('DELETE FROM gymlog(workout_id, user_id, date, split, exercises) WHERE workout_id = $1', workout_id);
+        const result = await query('DELETE FROM gymlog(workout_id, date, split, exercises) WHERE workout_id = $1', workout_id);
+        console.log(result.rows[0]);
     } catch (error) {
         console.log(error);
     }
@@ -36,12 +40,15 @@ export const deleteWorkout = async (workout_id) => {
 
 export const editWorkout = async (workout_id, date, split, exercises) => {
     try {
-        await query('UPDATE gymlog(workout_id, user_id, date, split, exercises) SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
+        const result = await query('UPDATE gymlog(workout_id, user_id, date, split, exercises) SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
                     [date, split, exercises, workout_id]);
+        console.log(result.rows[0]);
     } catch (error) {
-        
+        console.log(error); 
     }
 }
+
+export const getPrevWorkouts = async (user_id, quantity) => {}
 
 // caller must release the Client
 export const getClient = () => {
