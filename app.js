@@ -10,15 +10,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // http action
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true})); 
 
 app.get('/', (req, res) => {
-    res.send("gymlog home page", req);
+
 });
 
 app.get('/submit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));
 });
 
 app.post('/submit', 
@@ -26,7 +26,9 @@ app.post('/submit',
     [
         body('date')
             .notEmpty().withMessage('date cannot be empty'),
-        body('exercises.[0-9]*.name')
+        body('split')
+            .optional(),
+        body('exercises.*.name')
             .isLength({ min: 1, max: 20}).withMessage('exercise must be between 1 and 20 characters')
             .matches(/^[A-Za-z ]+$/).withMessage('exercise name can only contain letters and spaces'),
         body('exercises.*.sets.*.weight')
@@ -40,8 +42,8 @@ app.post('/submit',
         const result = validationResult(req);
         if (result.isEmpty()) {
             const data = matchedData(req);
-            console.log(req.body);
-            db.addWorkout(data.date, data.split, data.exercises);
+            console.log(data);
+            db.addWorkout(null, data.date, data.split, data);
             res.send("workout received");
         } else {
             // Error 
@@ -49,9 +51,16 @@ app.post('/submit',
         }      
 });
 
+// frontend fetches previous workouts
+app.get('/api/workouts', async (req, res) => {
+    const result = await db.getPrevWorkouts(null, -1); 
+    res.status(400).json({ length: result.rowCount, rows: result.rows }); 
+})
+
 app.listen(PORT, (error) => {
     if (!error) {
         console.log(`server running on http://localhost:${PORT}`);
+        console.log(__dirname);
     } else {
         console.log(error);
     }
