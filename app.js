@@ -13,9 +13,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true})); 
 
-app.get('/', (req, res) => {
-
-});
+app.get('/', (req, res) => {});
 
 app.get('/submit', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));
@@ -44,7 +42,7 @@ app.post('/submit',
             const data = matchedData(req);
             console.log(data);
             db.addWorkout(null, data.date, data.split, data);
-            res.send("workout received");
+            res.redirect('/');
         } else {
             // Error 
             return res.status(422).json( { errors: result.array() });
@@ -52,16 +50,22 @@ app.post('/submit',
 });
 
 // frontend fetches previous workouts
-app.get('/api/workouts', async (req, res) => {
-    const result = await db.getPrevWorkouts(null, -1); 
-    res.status(400).json({ length: result.rowCount, rows: result.rows }); 
-})
+app.get('/api/load-workouts', async (req, res) => {
+    const result = await db.getPrevWorkouts(null, -2); 
+    return res.status(200).json({result: result}); 
+});
+
+app.get('/api/delete-workout', async (req, res) => {
+    // retrieve id of workout to be deleted from the request body?
+    const workout_id = req.params.workout_id;
+    const result = await deleteWorkout(workout_id); 
+});
 
 app.listen(PORT, (error) => {
     if (!error) {
         console.log(`server running on http://localhost:${PORT}`);
         console.log(__dirname);
     } else {
-        console.log(error);
+        console.error(error.message);
     }
 });

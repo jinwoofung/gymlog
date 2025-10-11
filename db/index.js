@@ -62,11 +62,15 @@ export const getPrevWorkouts = async (user_id, quantity) => {
     try {
         // to get all stored workout rows
         if (quantity === -1) {
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date', [user_id]);          
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date DESC', [user_id]);         
+            return result; 
+        } else if (quantity === -2) { // debugging option
+            const result = await query('SELECT * FROM workouts ORDER BY date DESC');
+            return result;
         } else {
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2', [user_id, quantity]);
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2 DESC', [user_id, quantity]);
+            return result;
         }
-        return result;
     } catch (e) {
         console.log(e); 
     }

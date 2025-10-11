@@ -1,49 +1,102 @@
-const renderWorkout = (date, split, workout) => {
-    const workoutSect = document.createElement('section').appendChild('.prev-workouts-section');
+const renderWorkout = (workout_id, date, split, workout) => {
+    const workoutSect = document.createElement('section');
+    workoutSect.workout_id = workout_id;
+    document.getElementById('prev-workouts-section').append(workoutSect); 
 
-    const dateSplitDiv = document.createElement('div').appendChild(workoutSect);  
-    const dateSplitHeader = document.createElement('h2').appendChild(dateSplitDiv);
+    const deleteButton = document.createElement('button'); 
+    deleteButton.className = 'delete-workout-button';
+    workoutSect.append(deleteButton);
+
+    const dateSplitDiv = document.createElement('div');
+    workoutSect.append(dateSplitDiv);
+
+    const dateSplitHeader = document.createElement('h2');
+    dateSplitDiv.append(dateSplitHeader); 
     dateSplitHeader.textContent = `${date}: ${split}`; 
 
-    const workoutDiv = document.createElement('div').appendChild(workoutSect); 
+    const workoutDiv = document.createElement('div')
+    workoutSect.append(workoutDiv); 
+
     for (var i = 0; i < workout.exercises.length; ++i) {
         const exerciseDiv = document.createElement('div'); 
-        document.createElement('h3').appendChild(exerciseDiv).textContent = `${workout.exercises[i].name}`;
-        for (var j = 0; i < workout.exercises[i].sets.length; ++j) {
+        workoutDiv.append(exerciseDiv);
+        const h3 = document.createElement('h3');
+        h3.textContent = `${workout.exercises[i].name}`;
+        exerciseDiv.append(h3);
+
+        for (var j = 0; j < workout.exercises[i].sets.length; ++j) {
             const setObj = workout.exercises[i].sets[j]; 
-            const setDiv = document.createElement('div').appendChild(exerciseDiv);
-            const setP = document.createElement('p').appendChild(setDiv); 
-            setP.textContent = `Set ${j}: ${setObj.weight}lbs for ${setObj.reps} repetitions`;
+            const setDiv = document.createElement('div');
+            exerciseDiv.append(setDiv);
+
+            const p = document.createElement('p');
+            p.textContent = `Set ${j}: ${setObj.weight}lbs for ${setObj.reps} repetitions`;
+            setDiv.append(p);
         }
     }
-    console.log("SUCCESS: loaded a stored workout")
 }
 
 // Must be given results.rowCount and results.rows
 // Parses rows returned by calling result.rows on the workout db. 
-const renderWorkouts = async (len, workoutRows) => {
+const renderWorkouts = async () => {
     // GET request to fetch previous workout
-    const url = '/api/workouts'; 
+    const url = '/api/load-workouts'; 
     try {
         const response = await fetch(url); 
         if (!response.ok) {
             throw new Error(`Response status ${response.status}`);
         } 
-        const result = await response.json();
-        console.log(result); 
+        const temp = await response.json(); 
+        const result = temp.result;
+        for (var i = 0; i < result.rowCount; ++i) {
+            console.log('...');
+            const curWorkout = result.rows[i];
+            renderWorkout(curWorkout.date, curWorkout.split, curWorkout.workout); 
+        }
     } catch (e) {
         console.error(e.message); 
     }
-
-    for (i = 0; i < len; ++i) {
-        const curWorkoutObj = workoutRows[i];
-        renderWorkout(curWorkoutObj.date, curWorkoutObj.split, curWorkoutObj.workout); 
-    }
-    console.log(`SUCCESS: loaded ${len} stored workouts`)
 }
 
-const result = getPrevWorkouts(null, -1);
-console.log(`${result.rowCount}`); 
+const deleteWorkout = async (workout_id) => {
+    const url = '/api/delete-workout?';
+    const params = new URLSearchParams(url.search);
+    params.append("workout_id", workout_id);
 
-// load previous workouts
-renderWorkouts(result.rowCount, result.rows); 
+    try {
+        const response = await fetch(url, {
+            method: 'DELETE', 
+        });
+    } catch (e) {
+        console.log(e); 
+    }
+}
+
+const editWorkout = async (workout_id) => {
+    const url = 'api/edit-workout?';
+    const params = new URLSearchParams(url.search);
+    params.append("workout_id", workout_id); 
+
+    try {
+        const response = await fetch(url, {
+            method: 'PATCH',
+            // body should contain updated data
+        });
+    } catch (e) {
+        console.log(e); 
+    }
+}; 
+
+document.getElementById('prev-workouts-section').addEventListener("click", (e) => {
+    if (e.target.className === 'delete-workout-button') {
+        const workout_id = e.target.parentElement.workout_id; 
+        const result = deleteWorkout(workout_id); 
+    } else if (e.target.className === 'edit-workout-button') {
+        const workout_id = e.target.parentElement.workout_id; 
+        const result = editWorkout(workout_id); 
+    }
+});
+
+document.addEventListener("DOMContentLoaded", (event) => {
+    renderWorkouts(); 
+});
