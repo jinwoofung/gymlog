@@ -56,18 +56,20 @@ export const editWorkout = async (workout_id, date, split, exercises) => {
     }
 }
 
-// returns a result object as described by the 'pg' module. 
-// user_id currently useless as the user feature is not implemented. 
+// Returns a result object as described by the 'pg' module. 
+// !! param 'user_id' is obsolete as the user feature is not implemented.
 export const getPrevWorkouts = async (user_id, quantity) => {
     try {
-        // to get all stored workout rows
+        // return every workout entry in the db
         if (quantity === -1) {
             const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date DESC', [user_id]);         
             return result; 
-        } else if (quantity === -2) { // debugging option
+        // debugging option
+        } else if (quantity === -2) { 
             const result = await query('SELECT * FROM workouts ORDER BY date DESC');
             return result;
         } else {
+            // param 'quantity' determines how many workout entries are returned
             const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2 DESC', [user_id, quantity]);
             return result;
         }

@@ -125,5 +125,7 @@ document.getElementById("workout-form").addEventListener("click", function(e) {
 
 document.getElementById("submit-workout-button").addEventListener("click", function(e) {
     const workoutForm = document.getElementById("workout-form"); 
+
+    // When clicked, the data in the form is handled by express middleware. 
 });
 

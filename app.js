@@ -19,8 +19,9 @@ app.get('/submit', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));
 });
 
+// POST /submit
 app.post('/submit', 
-    // server-side form validation
+    // server-side form validation using express-validator
     [
         body('date')
             .notEmpty().withMessage('date cannot be empty'),
@@ -38,10 +39,13 @@ app.post('/submit',
     ],
     (req, res) => {
         const result = validationResult(req);
+        // if isEmpty returns true, then the result object has no errors. 
         if (result.isEmpty()) {
             const data = matchedData(req);
             console.log(data);
-            db.addWorkout(null, data.date, data.split, data);
+            db.addWorkout(null, data.date, data.split, data); 
+            
+            // returns to home page
             res.redirect('/');
         } else {
             // Error 
@@ -49,7 +53,7 @@ app.post('/submit',
         }      
 });
 
-// frontend fetches previous workouts
+// GET /api/load-workouts
 app.get('/api/load-workouts', async (req, res) => {
     const result = await db.getPrevWorkouts(null, -2); 
     return res.status(200).json({result: result}); 
@@ -60,6 +64,11 @@ app.get('/api/delete-workout', async (req, res) => {
     const workout_id = req.params.workout_id;
     const result = await deleteWorkout(workout_id); 
 });
+
+app.get('/api/edit-workout', async (req, res) => {
+    const workout_id = req.params.workout_id;
+    const result = await editWorkout(workout_id); 
+})
 
 app.listen(PORT, (error) => {
     if (!error) {
