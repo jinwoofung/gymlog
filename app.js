@@ -44,7 +44,7 @@ app.post('/submit',
             const data = matchedData(req);
             console.log(data);
             db.addWorkout(null, data.date, data.split, data); 
-            
+
             // returns to home page
             res.redirect('/');
         } else {
@@ -59,15 +59,20 @@ app.get('/api/load-workouts', async (req, res) => {
     return res.status(200).json({result: result}); 
 });
 
-app.get('/api/delete-workout', async (req, res) => {
+// DELETE /api/delete-workout
+// Deletes a workout from the database 
+app.delete('/api/workout/:workoutId', async (req, res) => {
     // retrieve id of workout to be deleted from the request body?
-    const workout_id = req.params.workout_id;
-    const result = await deleteWorkout(workout_id); 
+    const workoutId = req.params.workoutId;
+    console.log(`Received DELETE request for workout (id: ${workoutId})`);
+    const result = await db.deleteWorkout(workoutId); 
+
+    return res.sendStatus(204); 
 });
 
-app.get('/api/edit-workout', async (req, res) => {
-    const workout_id = req.params.workout_id;
-    const result = await editWorkout(workout_id); 
+app.patch('/api/workout/:workoutId', async (req, res) => {
+    const workoutId = req.params.workoutId;
+    const result = await editWorkout(workoutId); 
 })
 
 app.listen(PORT, (error) => {

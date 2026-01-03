@@ -1,14 +1,7 @@
-const renderWorkout = (workout_id, date, split, workout) => {
+const renderWorkout = (workoutId, date, split, workout) => {
     const workoutSect = document.createElement('section');
-    // workoutSect.workout_id = workout_id;
+    workoutSect.workoutId = workoutId;
     document.getElementById('prev-workouts-section').append(workoutSect); 
-    
-
-    /* 
-    const deleteButton = document.createElement('button'); 
-    deleteButton.className = 'delete-workout-button';
-    workoutSect.append(deleteButton); 
-    */ 
 
     const dateSplitDiv = document.createElement('div');
     workoutSect.append(dateSplitDiv);
@@ -16,6 +9,11 @@ const renderWorkout = (workout_id, date, split, workout) => {
     const dateSplitHeader = document.createElement('h2');
     dateSplitDiv.append(dateSplitHeader); 
     dateSplitHeader.textContent = `${date}: ${split}`; 
+
+    const deleteButton = document.createElement('button'); 
+    deleteButton.className = 'delete-workout-button';
+    deleteButton.textContent = 'delete this workout'
+    workoutSect.append(deleteButton); 
 
     const workoutDiv = document.createElement('div')
     workoutSect.append(workoutDiv); 
@@ -43,63 +41,60 @@ const renderWorkout = (workout_id, date, split, workout) => {
 // Must be given results.rowCount and results.rows
 const renderWorkouts = async () => {
     // GET request to fetch previous workout
-    try {
-        const response = await fetch('/api/load-workouts'); 
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        } 
-        const temp = await response.json(); 
-        const result = temp.result;
-        for (var i = 0; i < result.rowCount; ++i) {
-            const curWorkout = result.rows[i];
-            // first param for renderWorkout is blank because id system is not implemented
-            renderWorkout('', curWorkout.date, curWorkout.split, curWorkout.workout); 
-            console.log(`Displayed ${i} out of ${result.rowCount} rows`);
-        }
-    } catch (e) {
-        console.error(e.message); 
+    const response = await fetch('/api/load-workouts'); 
+    if (!response.ok) {
+        throw new Error(`Response status ${response.status}`);
+    } 
+
+    const temp = await response.json(); 
+    const result = temp.result;
+    for (var i = 0; i < result.rowCount; ++i) {
+        const curWorkout = result.rows[i];
+        // first param for renderWorkout is blank because id system is not implemented
+        renderWorkout(curWorkout.workout_id, curWorkout.date, curWorkout.split, curWorkout.workout); 
+        console.log(`Displayed ${i} out of ${result.rowCount} rows`);
     }
 }
 
-const deleteWorkout = async (workout_id) => {
-    const url = '/api/delete-workout?';
-    const params = new URLSearchParams(url.search);
-    params.append("workout_id", workout_id);
 
-    try {
-        const response = await fetch(url, {
-            method: 'DELETE', 
-        });
-    } catch (e) {
-        console.log(e); 
+const deleteWorkout = async (workoutId) => {
+    const url = `/api/workout/${workoutId}`;
+    const response = await fetch(url, {
+        method: 'DELETE',   
+    }); 
+
+    if (!response.ok) {
+        throw new Error(`Response status ${response.status}`); 
     }
+    return response;
 }
 
-const editWorkout = async (workout_id) => {
-    const url = 'api/edit-workout?';
-    const params = new URLSearchParams(url.search);
-    params.append("workout_id", workout_id); 
-
-    try {
-        const response = await fetch(url, {
+const editWorkout = async (workoutId, patchData) => {
+    const url = `api/workout/${workoutId}`;
+    const response = await fetch(url, {
             method: 'PATCH',
             // body should contain updated data
+            body: patchData,
         });
-    } catch (e) {
-        console.log(e); 
+
+    if (!response.ok) {
+        throw new Error(`Response status ${response.status}`)
     }
 }; 
-/*
-document.getElementById('prev-workouts-section').addEventListener("click", (e) => {
+
+document.getElementById('prev-workouts-section').addEventListener("click", async (e) => {
     if (e.target.className === 'delete-workout-button') {
-        const workout_id = e.target.parentElement.workout_id; 
-        const result = deleteWorkout(workout_id); 
+        console.log('!!!');
+        const workoutId = e.target.parentElement.workoutId; 
+        const result = await deleteWorkout(workoutId); 
+        // remove rendered workout section 
+        e.target.parentElement.remove();
     } else if (e.target.className === 'edit-workout-button') {
         const workout_id = e.target.parentElement.workout_id; 
-        const result = editWorkout(workout_id); 
+        const result = await editWorkout(workout_id); 
     }
 });
-*/
+
 
 document.addEventListener("DOMContentLoaded", (event) => {
     renderWorkouts(); 

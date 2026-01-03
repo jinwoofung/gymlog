@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 
 const INIT_DB_PATH = './init.sql'; 
@@ -27,8 +28,12 @@ export const initDb = async () => {
 
 export const addWorkout = async (user_id, date, split, exercises) => {
     try {
-        const result = await query('INSERT INTO workouts(date, split, workout) VALUES($1, $2, $3) RETURNING *',
-        [date, split, exercises]); 
+        // generating workout id using uuid v4 
+        const workout_id = uuidv4();
+        console.log(workout_id); 
+
+        const result = await query('INSERT INTO workouts(workout_id, date, split, workout) VALUES($1, $2, $3, $4) RETURNING *',
+        [workout_id, date, split, exercises]); 
 
         console.log(`row added:\n ${result.rows[0]}`);
         return result.rows[0];
@@ -38,12 +43,10 @@ export const addWorkout = async (user_id, date, split, exercises) => {
 }
 
 export const deleteWorkout = async (workout_id) => {
-    try {
-        const result = await query('DELETE FROM workouts(workout_id, date, split, workout) WHERE workout_id = $1', workout_id);
-        console.log(result.rows[0]);
-    } catch (e) {
-        console.log(e);
-    }
+    console.log('Entered db.deleteWorkout');
+    const result = await query('DELETE FROM workouts WHERE workout_id = $1', [workout_id]);
+    console.log('Completed query inside db.deleteWorkout');
+    return result;
 }
 
 export const editWorkout = async (workout_id, date, split, exercises) => {
