@@ -2,6 +2,7 @@ import express from 'express';
 import { body, validationResult, matchedData } from 'express-validator'; 
 import { fileURLToPath } from 'url';
 import path from 'path';
+import session from 'express-session';
 import * as db from './db/index.js';
 
 const app = express();
@@ -12,8 +13,20 @@ const __dirname = path.dirname(__filename);
 // http action
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true})); 
+app.use(session({
+    secret: 'some secret',
+    saveUninitialized: false,
+    resave: false, 
+    cookie: { // cookie lifetime}
+        maxAge: 60000 * 60, // 1 hour
+    },
+}));
 
 app.get('/', (req, res) => {});
+
+app.post('/login', (req, res) => {
+
+});
 
 app.get('/submit', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));

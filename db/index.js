@@ -13,6 +13,35 @@ const pool = new Pool({
     database: 'gymlog',
 });
 
+// users
+export const addUser = async (userId, password) => {
+    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [userId]);
+    if (result.rowCount > 0) {
+        return new Error(`The username ${userId} is already in use.`);
+    } else {
+        // assume password secure-ness to be verified
+        const newUser = await query('INSERT INTO users(user_id, password) VALUES($1, $2) RETURNING *'); 
+    }
+}
+
+export const verifyUser = async (userId, password) => {
+    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [userId]);
+    // user_id is assumed to be unique 
+    if (result.rows[0].password == password) {
+        return true;
+        // server should provide a sessionId to the validated user
+    } else {
+        return false;
+        // forbidden access 
+    }
+}
+
+// sessions
+export const verifySession = (userId, sessionId) => {
+
+}
+
+// workouts
 export const query = (text, params) => {
     return pool.query(text, params)
 }

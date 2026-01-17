@@ -18,6 +18,7 @@
   "homepage": "https://github.com/jinwoofung/gymlog#readme",
   "dependencies": {
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "express-validator": "^7.2.1",
     "path": "^0.12.7",
     "pg": "^8.16.3",

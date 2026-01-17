@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     PRIMARY KEY(user_id)
 );
 
+CREATE TABLE IF NOT EXISTS sessions
+
 CREATE TABLE IF NOT EXISTS workouts (
     workout_id UUID NOT NULL, 
 	user_id UUID, 
