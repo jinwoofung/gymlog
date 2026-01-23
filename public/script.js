@@ -97,5 +97,6 @@ document.getElementById('prev-workouts-section').addEventListener("click", async
 
 
 document.addEventListener("DOMContentLoaded", (event) => {
+    // todo: display "<h2> Welcome {req.session.userId} </h2>" + /public/index.html
     renderWorkouts(); 
 });

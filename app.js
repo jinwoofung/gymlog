@@ -10,29 +10,78 @@ const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// http action
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true})); 
+
+// session middleware
 app.use(session({
-    secret: 'some secret',
-    saveUninitialized: false,
+    secret: 'cookie cutter', // signs the sessionId 
+    saveUninitialized: false, 
+    /* 
+    setting 'saveUnintialized = false' allows for the login system to be 
+    implemented because the sessionId cannot be used for 
+    authentication until it is saved (i.e. user logs in succesfully) 
+    */ 
+
     resave: false, 
-    cookie: { // cookie lifetime}
-        maxAge: 60000 * 60, // 1 hour
+
+    /*
+    note: clients stores the server-provided sessionId 
+    in cookies with the name 'connect.sid'
+    */
+    cookie: { 
+        maxAge: 60000, // cookie lifetime = 1 min 
     },
 }));
 
-app.get('/', (req, res) => {});
+function authenticated (req, res, next) {
+    if (req.session.user)  next(); // 'user' field will be empty if not authenticated
+    else next('route'); // jump to nearest middleware w/ matching route
+}
 
-app.post('/login', (req, res) => {
-
+app.get('/', authenticated, (req, res) => {
+    // only executes for authenticated user's requests 
+    res.sendFile(path.join(__dirname, 'public/'));
 });
+
+app.get('/', (req, res) => {
+    // redirects unauthenticated clients to login
+    res.redirect('login');
+})
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/login/'))
+})
+
+app.post('/login', async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    const verified = await db.verifyUser(username, password);
+    
+    if (verified) {
+        req.session.user = username; // assigns the user to the session object
+        req.session.save(function(err) {
+            if (err) return next(err);
+            res.redirect('/');
+        })
+    }
+
+    res.status(401).send('Invalid username or password');
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).send('Failed to logout');
+        }
+        res.redirect('/login'); // Redirect to login after logout
+      }
+)})
 
 app.get('/submit', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));
 });
 
-// POST /submit
 app.post('/submit', 
     // server-side form validation using express-validator
     [
@@ -66,13 +115,12 @@ app.post('/submit',
         }      
 });
 
-// GET /api/load-workouts
+
 app.get('/api/load-workouts', async (req, res) => {
     const result = await db.getPrevWorkouts(null, -2); 
     return res.status(200).json({result: result}); 
 });
 
-// DELETE /api/delete-workout
 // Deletes a workout from the database 
 app.delete('/api/workout/:workoutId', async (req, res) => {
     // retrieve id of workout to be deleted from the request body?

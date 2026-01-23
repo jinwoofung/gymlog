@@ -25,7 +25,7 @@ export const addUser = async (userId, password) => {
 }
 
 export const verifyUser = async (userId, password) => {
-    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [userId]);
+    const result = await query(`SELECT * FROM users WHERE username = $1`, [userId]);
     // user_id is assumed to be unique 
     if (result.rows[0].password == password) {
         return true;
@@ -38,7 +38,7 @@ export const verifyUser = async (userId, password) => {
 
 // sessions
 export const verifySession = (userId, sessionId) => {
-
+    
 }
 
 // workouts
