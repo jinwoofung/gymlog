@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="style.css">
+    <title>Document</title>
+</head>
+<body>
+    <main>
+        <h2>Signup</h2>
+        <form id="signupForm", method="post", action="signup">
+            {% if userExists %}
+            <p class="error">This username is already taken. Please try a different one.</p>
+            {% endif %}
+            <label>Username<input id="username" name="username"></label>
+            <label>Password<input type="password" name="password"></label>
+            <button form="signupForm", id="signupButton", type="submit">Signup</button>
+        </form>
+    </main>
+<script src="nunjucks.js"></script>
+</body>
+</html>

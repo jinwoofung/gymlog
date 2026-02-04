@@ -14,10 +14,24 @@ const pool = new Pool({
 });
 
 // users
-export const addUser = async (userId, password) => {
-    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [userId]);
-    if (result.rowCount > 0) {
-        return new Error(`The username ${userId} is already in use.`);
+export const addUser = async (username, password) => {
+    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [username]);
+
+    /* 
+    types of errors requiring handlers
+    1. duplicate username 
+    
+    2. username uses characters that are not allowed (non-english language, special characters)
+    3. username is too long (exceeds 255)
+
+    but 2, 3 are handled by express-validator inside the route handler
+    */
+
+    if (result.rowCount > 0) { 
+        // handled by signup post route handler
+        const err = new Error(`Username: ${username} is already in use.`);
+        err.name = "ExistingUserError"; // allows specific (custom) error recognition by caller 
+        throw err; 
     } else {
         // assume password secure-ness to be verified
         const newUser = await query('INSERT INTO users(user_id, password) VALUES($1, $2) RETURNING *'); 

@@ -3,12 +3,18 @@ import { body, validationResult, matchedData } from 'express-validator';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import session from 'express-session';
+import nunjucks from 'nunjucks.js';
 import * as db from './db/index.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+nunjucks.configure('/views', { 
+    autoescape: true,
+    express: app,
+}); 
 
 app.use(express.urlencoded({extended : true})); 
 
@@ -21,7 +27,6 @@ app.use(session({
     implemented because the sessionId cannot be used for 
     authentication until it is saved (i.e. user logs in succesfully) 
     */ 
-
     resave: false, 
 
     /*
@@ -36,11 +41,11 @@ app.use(session({
 function authenticated (req, res, next) {
     if (req.session.user)  next(); // 'user' field will be empty if not authenticated
     else next('route'); // jump to nearest middleware w/ matching route
-}
+} 
 
 app.get('/', authenticated, (req, res) => {
     // only executes for authenticated user's requests 
-    res.sendFile(path.join(__dirname, 'public/'));
+    res.render('/login/index.html'); 
 });
 
 app.get('/', (req, res) => {
@@ -49,7 +54,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/login/'))
+    res.render('/login/index.html'); 
 })
 
 app.post('/login', async (req, res) => {
@@ -60,13 +65,11 @@ app.post('/login', async (req, res) => {
     
     if (verified) {
         req.session.user = username; // assigns the user to the session object
-        req.session.save(function(err) {
+        req.session.save(function(err) { // forcibly stores the sid in the session store
             if (err) return next(err);
-            res.redirect('/');
+            res.redirect('/'); // redirects authorized user the page containing personalized workout data
         })
     }
-
-    res.status(401).send('Invalid username or password');
 });
 
 app.get('/logout', (req, res) => {
@@ -78,8 +81,31 @@ app.get('/logout', (req, res) => {
       }
 )})
 
+app.get('/signup', (req, res) => {
+    res.render('/signup/index.html')
+});
+
+app.post('/signup', async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    try {
+        const created = await addUser(username, password);
+    } catch (err) {
+        // template engine to dynamically modify html to guide users through errors
+        // red text saying "this username is already in use"
+        if (err.name = "ExistingUserError") {
+            var data = { userExists: true, }; 
+            res.render('/signup/index.html', data); 
+        }
+    }
+
+    // upon succesful signup, direct users back to login page 
+    res.redirect('/login/index.html'); 
+});
+
 app.get('/submit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html'));
+    res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html')); // not sure why this html file is titled different
 });
 
 app.post('/submit', 
