@@ -15,7 +15,7 @@ const pool = new Pool({
 
 // users
 export const addUser = async (username, password) => {
-    const result = await query(`SELECT * FROM users WHERE user_id = $1`, [username]);
+    const result = await query(`SELECT * FROM users WHERE username = $1`, [username]);
 
     /* 
     types of errors requiring handlers
@@ -27,32 +27,32 @@ export const addUser = async (username, password) => {
     but 2, 3 are handled by express-validator inside the route handler
     */
 
-    if (result.rowCount > 0) { 
+    if (result.rowCount != 0) { 
         // handled by signup post route handler
         const err = new Error(`Username: ${username} is already in use.`);
         err.name = "ExistingUserError"; // allows specific (custom) error recognition by caller 
         throw err; 
     } else {
         // assume password secure-ness to be verified
-        const newUser = await query('INSERT INTO users(user_id, password) VALUES($1, $2) RETURNING *'); 
+        const newUser = await query('INSERT INTO users(username, password) VALUES($1, $2) RETURNING *', [username, password]);
     }
 }
 
-export const verifyUser = async (userId, password) => {
-    const result = await query(`SELECT * FROM users WHERE username = $1`, [userId]);
+export const verifyUser = async (username, password) => {
+    const result = await query(`SELECT * FROM users WHERE username = $1`, [username]);
     // user_id is assumed to be unique 
-    if (result.rows[0].password == password) {
+    if (result.rowCount == 0){ // edge case: when no such username exists
+        return false;
+    }
+    else if (result.rows[0].password == password) {
         return true;
         // server should provide a sessionId to the validated user
-    } else {
-        return false;
-        // forbidden access 
-    }
+    } 
+    return false;
 }
 
 // sessions
 export const verifySession = (userId, sessionId) => {
-    
 }
 
 // workouts

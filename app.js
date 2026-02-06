@@ -3,7 +3,7 @@ import { body, validationResult, matchedData } from 'express-validator';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import session from 'express-session';
-import nunjucks from 'nunjucks.js';
+import nunjucks from 'nunjucks';
 import * as db from './db/index.js';
 
 const app = express();
@@ -11,9 +11,9 @@ const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-nunjucks.configure('/views', { 
+nunjucks.configure(path.join(__dirname, 'views'), { 
     autoescape: true,
-    express: app,
+    express: app
 }); 
 
 app.use(express.urlencoded({extended : true})); 
@@ -45,7 +45,7 @@ function authenticated (req, res, next) {
 
 app.get('/', authenticated, (req, res) => {
     // only executes for authenticated user's requests 
-    res.render('/login/index.html'); 
+    res.render('log/index.html'); 
 });
 
 app.get('/', (req, res) => {
@@ -54,7 +54,8 @@ app.get('/', (req, res) => {
 })
 
 app.get('/login', (req, res) => {
-    res.render('/login/index.html'); 
+    res.render('login/index.html'); 
+    // Mistake: setting render path to /login/ + ... will treat the root directory as __dirname + /login which does not exist. 
 })
 
 app.post('/login', async (req, res) => {
@@ -69,6 +70,8 @@ app.post('/login', async (req, res) => {
             if (err) return next(err);
             res.redirect('/'); // redirects authorized user the page containing personalized workout data
         })
+    } else {
+        res.redirect('/login');
     }
 });
 
@@ -82,26 +85,31 @@ app.get('/logout', (req, res) => {
 )})
 
 app.get('/signup', (req, res) => {
-    res.render('/signup/index.html')
+    res.render('signup/index.html')
 });
 
 app.post('/signup', async (req, res) => {
+    console.log("signup request")
     const username = req.body.username;
     const password = req.body.password;
 
     try {
-        const created = await addUser(username, password);
+        const created = await db.addUser(username, password);
     } catch (err) {
         // template engine to dynamically modify html to guide users through errors
         // red text saying "this username is already in use"
-        if (err.name = "ExistingUserError") {
-            var data = { userExists: true, }; 
-            res.render('/signup/index.html', data); 
+        if (err.name == "ExistingUserError") {
+            var data = { userExists: true }; 
+            return res.render('signup/index.html', data);
+            /*
+            Mistake: Simply calling res.render and NOT RETURNING it will not stop execution causing the 
+            res.redirect call below will also be executed which is not allowed because it sets the header twice. 
+            */
         }
     }
 
     // upon succesful signup, direct users back to login page 
-    res.redirect('/login/index.html'); 
+    res.redirect('/login'); 
 });
 
 app.get('/submit', (req, res) => {
