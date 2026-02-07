@@ -41,7 +41,10 @@ const renderWorkout = (workoutId, date, split, workout) => {
 // Must be given results.rowCount and results.rows
 const renderWorkouts = async () => {
     // GET request to fetch previous workout
-    const response = await fetch('/api/load-workouts'); 
+    const response = await fetch('/api/load-workouts', {
+        method: "GET",
+        credentials: 'include'
+    }); 
     if (!response.ok) {
         throw new Error(`Response status ${response.status}`);
     } 
@@ -84,7 +87,6 @@ const editWorkout = async (workoutId, patchData) => {
 
 document.getElementById('prev-workouts-section').addEventListener("click", async (e) => {
     if (e.target.className === 'delete-workout-button') {
-        console.log('!!!');
         const workoutId = e.target.parentElement.workoutId; 
         const result = await deleteWorkout(workoutId); 
         // remove rendered workout section 

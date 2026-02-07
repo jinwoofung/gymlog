@@ -11,6 +11,8 @@ const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 nunjucks.configure(path.join(__dirname, 'views'), { 
     autoescape: true,
     express: app
@@ -34,18 +36,18 @@ app.use(session({
     in cookies with the name 'connect.sid'
     */
     cookie: { 
-        maxAge: 60000, // cookie lifetime = 1 min 
+        maxAge: 600000, // cookie lifetime = 1 min 
     },
 }));
 
 function authenticated (req, res, next) {
-    if (req.session.user)  next(); // 'user' field will be empty if not authenticated
+    if (req.session.userId)  next(); // 'user' field will be empty if not authenticated
     else next('route'); // jump to nearest middleware w/ matching route
 } 
 
 app.get('/', authenticated, (req, res) => {
     // only executes for authenticated user's requests 
-    res.render('log/index.html'); 
+    res.redirect('/api/load-workouts');
 });
 
 app.get('/', (req, res) => {
@@ -54,7 +56,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/login', (req, res) => {
-    res.render('login/index.html'); 
+    res.render('login.html'); 
     // Mistake: setting render path to /login/ + ... will treat the root directory as __dirname + /login which does not exist. 
 })
 
@@ -65,8 +67,9 @@ app.post('/login', async (req, res) => {
     const verified = await db.verifyUser(username, password);
     
     if (verified) {
-        req.session.user = username; // assigns the user to the session object
-        req.session.save(function(err) { // forcibly stores the sid in the session store
+        const userId = await db.getUserId(username, password); 
+        req.session.userId = userId; // assigns the user to the session object
+        req.session.save(function(err) { // saves changes made to the session object (added user) for future use
             if (err) return next(err);
             res.redirect('/'); // redirects authorized user the page containing personalized workout data
         })
@@ -85,7 +88,7 @@ app.get('/logout', (req, res) => {
 )})
 
 app.get('/signup', (req, res) => {
-    res.render('signup/index.html')
+    res.render('signup.html')
 });
 
 app.post('/signup', async (req, res) => {
@@ -100,7 +103,7 @@ app.post('/signup', async (req, res) => {
         // red text saying "this username is already in use"
         if (err.name == "ExistingUserError") {
             var data = { userExists: true }; 
-            return res.render('signup/index.html', data);
+            return res.render('signup.html', data);
             /*
             Mistake: Simply calling res.render and NOT RETURNING it will not stop execution causing the 
             res.redirect call below will also be executed which is not allowed because it sets the header twice. 
@@ -112,11 +115,11 @@ app.post('/signup', async (req, res) => {
     res.redirect('/login'); 
 });
 
-app.get('/submit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'form', 'formIndex.html')); // not sure why this html file is titled different
+app.get('/submit', authenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'html', 'form.html')); 
 });
 
-app.post('/submit', 
+app.post('/submit', authenticated,
     // server-side form validation using express-validator
     [
         body('date')
@@ -142,7 +145,7 @@ app.post('/submit',
             db.addWorkout(null, data.date, data.split, data); 
 
             // returns to home page
-            res.redirect('/');
+            res.redirect('/api/load-workouts');
         } else {
             // Error 
             return res.status(422).json( { errors: result.array() });
@@ -150,13 +153,13 @@ app.post('/submit',
 });
 
 
-app.get('/api/load-workouts', async (req, res) => {
-    const result = await db.getPrevWorkouts(null, -2); 
-    return res.status(200).json({result: result}); 
+app.get('/api/load-workouts', authenticated, async (req, res) => {
+    const result = await db.getPrevWorkouts(req.session.userId, -2); 
+    return res.render('log.html', { result: result });
 });
 
 // Deletes a workout from the database 
-app.delete('/api/workout/:workoutId', async (req, res) => {
+app.delete('/api/workout/:workoutId', authenticated, async (req, res) => {
     // retrieve id of workout to be deleted from the request body?
     const workoutId = req.params.workoutId;
     console.log(`Received DELETE request for workout (id: ${workoutId})`);
@@ -165,7 +168,7 @@ app.delete('/api/workout/:workoutId', async (req, res) => {
     return res.sendStatus(204); 
 });
 
-app.patch('/api/workout/:workoutId', async (req, res) => {
+app.patch('/api/workout/:workoutId', authenticated, async (req, res) => {
     const workoutId = req.params.workoutId;
     const result = await editWorkout(workoutId); 
 })

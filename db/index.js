@@ -52,7 +52,8 @@ export const verifyUser = async (username, password) => {
 }
 
 // sessions
-export const verifySession = (userId, sessionId) => {
+export const getUserId = (username, password) => {
+    return query(`SELECT user_id FROM users WHERE username = $1`, [username]);
 }
 
 // workouts
@@ -69,14 +70,10 @@ export const initDb = async () => {
     } 
 }
 
-export const addWorkout = async (user_id, date, split, exercises) => {
+export const addWorkout = async (userId, date, split, exercises) => {
     try {
-        // generating workout id using uuid v4 
-        const workout_id = uuidv4();
-        console.log(workout_id); 
-
-        const result = await query('INSERT INTO workouts(workout_id, date, split, workout) VALUES($1, $2, $3, $4) RETURNING *',
-        [workout_id, date, split, exercises]); 
+        const result = await query('INSERT INTO workouts(user_id, date, split, workout) VALUES($1, $2, $3, $4) RETURNING *',
+        [userId, date, split, exercises]); 
 
         console.log(`row added:\n ${result.rows[0]}`);
         return result.rows[0];
@@ -104,11 +101,11 @@ export const editWorkout = async (workout_id, date, split, exercises) => {
 
 // Returns a result object as described by the 'pg' module. 
 // !! param 'user_id' is obsolete as the user feature is not implemented.
-export const getPrevWorkouts = async (user_id, quantity) => {
+export const getPrevWorkouts = async (userId, quantity) => {
     try {
         // return every workout entry in the db
         if (quantity === -1) {
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date DESC', [user_id]);         
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date DESC', [userId]);         
             return result; 
         // debugging option
         } else if (quantity === -2) { 
@@ -116,7 +113,7 @@ export const getPrevWorkouts = async (user_id, quantity) => {
             return result;
         } else {
             // param 'quantity' determines how many workout entries are returned
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2 DESC', [user_id, quantity]);
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2 DESC', [userId, quantity]);
             return result;
         }
     } catch (e) {
