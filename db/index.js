@@ -41,10 +41,10 @@ export const addUser = async (username, password) => {
 export const verifyUser = async (username, password) => {
     const result = await query(`SELECT * FROM users WHERE username = $1`, [username]);
     // user_id is assumed to be unique 
-    if (result.rowCount == 0){ // edge case: when no such username exists
+    if (result.rowCount === 0){ // edge case: when no such username exists
         return false;
     }
-    else if (result.rows[0].password == password) {
+    else if (result.rows[0].password === password) {
         return true;
         // server should provide a sessionId to the validated user
     } 
@@ -75,7 +75,6 @@ export const addWorkout = async (userId, date, split, exercises) => {
         const result = await query('INSERT INTO workouts(user_id, date, split, workout) VALUES($1, $2, $3, $4) RETURNING *',
         [userId, date, split, exercises]); 
 
-        console.log(`row added:\n ${result.rows[0]}`);
         return result.rows[0];
     } catch (e) {
         console.log(e); 
@@ -85,7 +84,6 @@ export const addWorkout = async (userId, date, split, exercises) => {
 export const deleteWorkout = async (workout_id) => {
     console.log('Entered db.deleteWorkout');
     const result = await query('DELETE FROM workouts WHERE workout_id = $1', [workout_id]);
-    console.log('Completed query inside db.deleteWorkout');
     return result;
 }
 
@@ -93,7 +91,6 @@ export const editWorkout = async (workout_id, date, split, exercises) => {
     try {
         const result = await query('UPDATE workouts(workout_id, user_id, date, split, workout) SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
                     [date, split, exercises, workout_id]);
-        console.log(result.rows[0]);
     } catch (e) {
         console.log(e); 
     }
@@ -105,7 +102,7 @@ export const getPrevWorkouts = async (userId, quantity) => {
     try {
         // return every workout entry in the db
         if (quantity === -1) {
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date DESC', [userId]);         
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1::uuid ORDER BY date DESC', [userId]); // query returns a pg.Result object        
             return result; 
         // debugging option
         } else if (quantity === -2) { 
@@ -113,7 +110,7 @@ export const getPrevWorkouts = async (userId, quantity) => {
             return result;
         } else {
             // param 'quantity' determines how many workout entries are returned
-            const result = await query('SELECT * FROM workouts WHERE user_id = $1 ORDER BY date LIMIT $2 DESC', [userId, quantity]);
+            const result = await query('SELECT * FROM workouts WHERE user_id = $1::uuid ORDER BY date DESC LIMIT $2', [userId, quantity]);
             return result;
         }
     } catch (e) {

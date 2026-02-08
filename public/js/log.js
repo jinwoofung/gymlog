@@ -51,6 +51,7 @@ const renderWorkouts = async () => {
 
     const temp = await response.json(); 
     const result = temp.result;
+    console.log(result);
     for (var i = 0; i < result.rowCount; ++i) {
         const curWorkout = result.rows[i];
         // first param for renderWorkout is blank because id system is not implemented
@@ -64,6 +65,7 @@ const deleteWorkout = async (workoutId) => {
     const url = `/api/workout/${workoutId}`;
     const response = await fetch(url, {
         method: 'DELETE',   
+        credentials: 'include'
     }); 
 
     if (!response.ok) {
@@ -76,8 +78,9 @@ const editWorkout = async (workoutId, patchData) => {
     const url = `api/workout/${workoutId}`;
     const response = await fetch(url, {
             method: 'PATCH',
+            credentials: 'include',
             // body should contain updated data
-            body: patchData,
+            body: patchData
         });
 
     if (!response.ok) {

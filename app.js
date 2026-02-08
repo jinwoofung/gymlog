@@ -11,8 +11,17 @@ const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, 'public')));
+/* 
+A file is statically served when it is not altered by the server. 
+form.html is only changed by the /css/form.js which is provided directly to the browser. 
+Static files may still request data from the db, but may not explicitly access it. 
+*/
+app.use(express.static(path.join(__dirname, 'public'))); 
 
+/*
+Views are templates that a template engine (on the server-side) 
+will modify before sending the final html file to the browser for display. 
+*/
 nunjucks.configure(path.join(__dirname, 'views'), { 
     autoescape: true,
     express: app
@@ -45,9 +54,17 @@ function authenticated (req, res, next) {
     else next('route'); // jump to nearest middleware w/ matching route
 } 
 
+/*
+req, res objects in Express: 
+req, res objects are representations of the HTTP request and response.
+They are not the actual HTTP requests received / HTTP responses given out. 
+Thus after their scope ends (i.e. goes through all middlewares), they are 
+destroyed through garbage collection. 
+*/
+
 app.get('/', authenticated, (req, res) => {
     // only executes for authenticated user's requests 
-    res.redirect('/api/load-workouts');
+    res.redirect('/dashboard');
 });
 
 app.get('/', (req, res) => {
@@ -67,8 +84,8 @@ app.post('/login', async (req, res) => {
     const verified = await db.verifyUser(username, password);
     
     if (verified) {
-        const userId = await db.getUserId(username, password); 
-        req.session.userId = userId; // assigns the user to the session object
+        const result = await db.getUserId(username, password); 
+        req.session.userId = result.rows[0].user_id; // assigns the user to the session object
         req.session.save(function(err) { // saves changes made to the session object (added user) for future use
             if (err) return next(err);
             res.redirect('/'); // redirects authorized user the page containing personalized workout data
@@ -141,21 +158,26 @@ app.post('/submit', authenticated,
         // if isEmpty returns true, then the result object has no errors. 
         if (result.isEmpty()) {
             const data = matchedData(req);
-            console.log(data);
-            db.addWorkout(null, data.date, data.split, data); 
+            db.addWorkout(req.session.userId, data.date, data.split, data); 
 
             // returns to home page
-            res.redirect('/api/load-workouts');
+            res.redirect('/dashboard');
         } else {
             // Error 
             return res.status(422).json( { errors: result.array() });
         }      
 });
 
+app.get('/dashboard', authenticated, async (req, res) => {
+    res.render("log.html");
+})
+
 
 app.get('/api/load-workouts', authenticated, async (req, res) => {
-    const result = await db.getPrevWorkouts(req.session.userId, -2); 
-    return res.render('log.html', { result: result });
+    console.log("req.session.userId = " + req.session.userId); 
+    const result = await db.getPrevWorkouts(req.session.userId, -1); // pg.Result object
+    console.log(result);
+    return res.status(200).json(({result: result})); 
 });
 
 // Deletes a workout from the database 
