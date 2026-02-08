@@ -41,7 +41,7 @@ const renderWorkout = (workoutId, date, split, workout) => {
 // Must be given results.rowCount and results.rows
 const renderWorkouts = async () => {
     // GET request to fetch previous workout
-    const response = await fetch('/api/load-workouts', {
+    const response = await fetch('/workouts/load-workouts', {
         method: "GET",
         credentials: 'include'
     }); 
@@ -62,7 +62,7 @@ const renderWorkouts = async () => {
 
 
 const deleteWorkout = async (workoutId) => {
-    const url = `/api/workout/${workoutId}`;
+    const url = `/workouts/${workoutId}`;
     const response = await fetch(url, {
         method: 'DELETE',   
         credentials: 'include'
@@ -75,7 +75,7 @@ const deleteWorkout = async (workoutId) => {
 }
 
 const editWorkout = async (workoutId, patchData) => {
-    const url = `api/workout/${workoutId}`;
+    const url = `/workouts/${workoutId}`;
     const response = await fetch(url, {
             method: 'PATCH',
             credentials: 'include',
