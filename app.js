@@ -12,9 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
 
-import auth from './routes/auth.js';
+import authRouter from './routes/auth.js';
 import pagesRouter from './routes/pages.js';
-import workouts from './routes/workouts.js';
+import workoutsRouter from './routes/workouts.js';
 
 /* 
 A file is statically served when it is not altered by the server. 
@@ -54,8 +54,8 @@ app.use(session({
     },
 }));
 
-app.use('/auth', auth);
-app.use('/workouts', workouts);
+app.use('/auth', authRouter);
+app.use('/workouts', workoutsRouter);
 app.use('/', pagesRouter);
 
 /*

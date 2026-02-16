@@ -9,7 +9,7 @@
 <body>
     <main>
         <h2>Signup</h2>
-        <form id="signupForm", method="post", action="/signup">
+        <form id="signupForm", method="post", action="/auth/signup">
             {% if userExists %}
             <p class="error">This username is already taken. Please try a different one.</p>
             {% endif %}

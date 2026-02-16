@@ -1,14 +1,14 @@
 import express from 'express';
 import * as db from '../db/index.js';
 
-const auth = express.Router();
+const authRouter = express.Router();
 
-auth.get('/login', (req, res) => {
+authRouter.get('/login', (req, res) => {
     res.render('login.html'); 
     // Mistake: setting render path to /login/ + ... will treat the root directory as __dirname + /login which does not exist. 
 })
 
-auth.post('/login', async (req, res) => {
+authRouter.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 
@@ -26,7 +26,7 @@ auth.post('/login', async (req, res) => {
     }
 });
 
-auth.get('/logout', (req, res) => {
+authRouter.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
           return res.status(500).send('Failed to logout');
@@ -35,11 +35,11 @@ auth.get('/logout', (req, res) => {
       }
 )})
 
-auth.get('/signup', (req, res) => {
+authRouter.get('/signup', (req, res) => {
     res.render('signup.html')
 });
 
-auth.post('/signup', async (req, res) => {
+authRouter.post('/signup', async (req, res) => {
     console.log("signup request")
     const username = req.body.username;
     const password = req.body.password;
@@ -59,8 +59,7 @@ auth.post('/signup', async (req, res) => {
         }
     }
 
-    // upon succesful signup, direct users back to login page 
     res.redirect('/login'); 
 });
 
-export default auth;
+export default authRouter;

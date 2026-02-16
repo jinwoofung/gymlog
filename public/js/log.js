@@ -1,6 +1,6 @@
 const renderWorkout = (workoutId, date, split, workout) => {
     const workoutSect = document.createElement('section');
-    workoutSect.workoutId = workoutId;
+    workoutSect.dataset.workoutId = workoutId; // HTMLDataset: Exists in attributes as data-workoutId 
     document.getElementById('prev-workouts-section').append(workoutSect); 
 
     const dateSplitDiv = document.createElement('div');
@@ -8,8 +8,19 @@ const renderWorkout = (workoutId, date, split, workout) => {
 
     const dateSplitHeader = document.createElement('h2');
     dateSplitDiv.append(dateSplitHeader); 
-    dateSplitHeader.textContent = `${date}: ${split}`; 
+    dateSplitHeader.textContent = `${date} ${split}`; 
 
+    // Redirects to a form that changes selected workout data upon submission
+    const editAnchor = document.createElement('a');
+    editAnchor.href = '/workouts/edit/' + workoutId;
+    workoutSect.append(editAnchor);
+
+    const editButton = document.createElement('button'); 
+    editButton.className = 'edit-workout-button';
+    editButton.textContent = 'edit this workout'
+    editAnchor.append(editButton); 
+
+    // Deletes a workout
     const deleteButton = document.createElement('button'); 
     deleteButton.className = 'delete-workout-button';
     deleteButton.textContent = 'delete this workout'
@@ -38,28 +49,24 @@ const renderWorkout = (workoutId, date, split, workout) => {
 }
 
 // renderWorkouts() parses and displays pre-existing workout data from the workout db. 
-// Must be given results.rowCount and results.rows
 const renderWorkouts = async () => {
     // GET request to fetch previous workout
     const response = await fetch('/workouts/load-workouts', {
         method: "GET",
-        credentials: 'include'
+        credentials: 'include' // Required for session data to be passed to route handler
     }); 
-    if (!response.ok) {
-        throw new Error(`Response status ${response.status}`);
-    } 
 
     const temp = await response.json(); 
     const result = temp.result;
-    console.log(result);
+    
     for (var i = 0; i < result.rowCount; ++i) {
         const curWorkout = result.rows[i];
-        // first param for renderWorkout is blank because id system is not implemented
-        renderWorkout(curWorkout.workout_id, curWorkout.date, curWorkout.split, curWorkout.workout); 
-        console.log(`Displayed ${i} out of ${result.rowCount} rows`);
+        var date = new Date(curWorkout.date); // Formats date to 'yyyy-MM-dd'
+        date = date.toISOString().split("T")[0]; // Splits 2007-03-01T13:00:00Z into an array containing [2007-03-01][13:00:00Z]
+
+        renderWorkout(curWorkout.workout_id, date, curWorkout.split, curWorkout.workout); 
     }
 }
-
 
 const deleteWorkout = async (workoutId) => {
     const url = `/workouts/${workoutId}`;
@@ -68,40 +75,17 @@ const deleteWorkout = async (workoutId) => {
         credentials: 'include'
     }); 
 
-    if (!response.ok) {
-        throw new Error(`Response status ${response.status}`); 
-    }
     return response;
 }
 
-const editWorkout = async (workoutId, patchData) => {
-    const url = `/workouts/${workoutId}`;
-    const response = await fetch(url, {
-            method: 'PATCH',
-            credentials: 'include',
-            // body should contain updated data
-            body: patchData
-        });
-
-    if (!response.ok) {
-        throw new Error(`Response status ${response.status}`)
-    }
-}; 
-
 document.getElementById('prev-workouts-section').addEventListener("click", async (e) => {
     if (e.target.className === 'delete-workout-button') {
-        const workoutId = e.target.parentElement.workoutId; 
+        const workoutId = e.target.parentElement.dataset.workoutId; 
         const result = await deleteWorkout(workoutId); 
-        // remove rendered workout section 
         e.target.parentElement.remove();
-    } else if (e.target.className === 'edit-workout-button') {
-        const workout_id = e.target.parentElement.workout_id; 
-        const result = await editWorkout(workout_id); 
-    }
+    } 
 });
 
-
 document.addEventListener("DOMContentLoaded", (event) => {
-    // todo: display "<h2> Welcome {req.session.userId} </h2>" + /public/index.html
     renderWorkouts(); 
 });

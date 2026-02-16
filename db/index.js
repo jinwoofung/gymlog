@@ -118,6 +118,12 @@ export const getPrevWorkouts = async (userId, quantity) => {
     }
 }
 
+export const getWorkoutById = async (userId, workoutId) => {
+    console.log("Entered getWorkoutById")
+    const result = await query('SELECT * FROM workouts WHERE user_id = $1::uuid AND workout_id = $2::uuid', [userId, workoutId]);
+    return result.rows[0];  
+}
+
 // caller must release the Client
 export const getClient = () => {
     return pool.connect();

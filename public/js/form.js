@@ -83,7 +83,7 @@ function createExerciseSection(exerciseNumber) {
             }
         } else if (e.target.className === "exercise-confirm-button") {
             const currentExerciseNumber = e.target.parentNode.exerciseNumber
-            createSetSection(currentExerciseNumber); // decouple
+            createSetSection(currentExerciseNumber); 
             e.target.hidden = true;
             document.getElementById("submit-workout-button").style.visibility = "visible";
         } 
