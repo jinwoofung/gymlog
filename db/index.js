@@ -89,7 +89,7 @@ export const deleteWorkout = async (workout_id) => {
 
 export const editWorkout = async (workout_id, date, split, exercises) => {
     try {
-        const result = await query('UPDATE workouts(workout_id, user_id, date, split, workout) SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
+        const result = await query('UPDATE workouts SET date = $1, split = $2, exercises = $3 WHERE workout_id = $4',
                     [date, split, exercises, workout_id]);
     } catch (e) {
         console.log(e); 

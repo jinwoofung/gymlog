@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     addEventListeners(); 
 });
 
-onsubmit = (e) => {
+document.getElementById("workout-form").onsubmit = (e) => { 
     const exerciseSections = document.querySelectorAll('.exerciseSection');
     for (let i = 0; i < exerciseSections.length; ++i) {
         exerciseSections[i].querySelector('.exerciseInput').name = `exercise[${i}]`;
@@ -96,3 +96,9 @@ onsubmit = (e) => {
         }
     }
 }
+
+/* 
+data = {
+    exercise: [
+        { sets: [{weight: ..., reps: ...}]}
+*/

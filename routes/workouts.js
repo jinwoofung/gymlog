@@ -10,8 +10,6 @@ const __dirname = path.dirname(__filename);
 
 const workoutsRouter = express.Router();
 
-
-
 function authenticated (req, res, next) {
     if (req.session.userId)  {
         next();
@@ -110,7 +108,7 @@ workoutsRouter.post('/edit/:workoutId', authenticated,
 
         if (validation.isEmpty()) {
             const data = matchedData(req);
-            const result = await db.editWorkout(req.params.workoutId, data.date, data.split, data); 
+            const result = await db.editWorkout(req.params.workoutId, dayjs(data.date), data.split, data); 
 
             res.redirect('/dashboard');
         } else {
